@@ -11,7 +11,7 @@
     <!-- 引入 Vue 3 (CDN) -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 
-    <!-- Tailwind 自定義設定 (還原設計稿顏色) -->
+    <!-- Tailwind 自定義設定 -->
     <script>
         tailwind.config = {
             theme: {
@@ -36,17 +36,14 @@
         }
     </script>
     <style>
-        /* 隱藏原生捲軸但保留捲動功能 */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
         body { background-color: #f4f6f8; color: #333; }
-        /* 載入動畫 */
         .loader {
             border: 4px solid #f3f3f3; border-top: 4px solid #3498db;
             border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        /* 模糊背景過渡 */
         .modal-enter-active, .modal-leave-active { transition: opacity 0.3s; }
         .modal-enter-from, .modal-leave-to { opacity: 0; }
     </style>
@@ -62,7 +59,7 @@
         <!-- Header -->
         <div class="flex items-center justify-center relative mb-12">
             <div class="absolute left-0 top-0 bg-dark-badge text-white text-xs px-3 py-1 rounded-sm shadow-sm">
-                幸福教學回饋系統
+                教學實務支援與回饋系統
             </div>
             <h1 class="text-3xl font-bold text-gray-700 tracking-wider mt-10 md:mt-0">幸福教學回饋中心</h1>
         </div>
@@ -72,7 +69,7 @@
         <!-- ========================================== -->
         <div v-if="currentView === 'home'" class="space-y-6 pb-10">
             
-            <!-- 卡片 1: 能量週記 -->
+            <!-- 卡片 1: 教學實務回饋 (原能量週記) -->
             <div @click="switchView('energy')" class="bg-gradient-to-r from-card-1-start to-card-1-end rounded-3xl p-8 cursor-pointer transform transition duration-300 hover:-translate-y-1 hover:shadow-md flex flex-col items-center justify-center text-center">
                 <div class="bg-blue-500 text-white p-2 rounded-md mb-4 shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -82,8 +79,8 @@
                       <rect x="5" y="9" width="10" height="6" rx="1" ry="1" fill="currentColor" />
                     </svg>
                 </div>
-                <h2 class="text-2xl font-bold text-gray-800 mb-2">每週能量週記</h2>
-                <p class="text-gray-600">微觀：每週一次的暫停與覺察</p>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">教學實務回饋</h2>
+                <p class="text-gray-600">微觀：教學成效追蹤與即時支援 (含檢核表)</p>
             </div>
 
             <!-- 卡片 2: 小組共學 -->
@@ -108,7 +105,7 @@
                 <p class="text-gray-600">宏觀：校園氛圍與資源盤點</p>
             </div>
 
-            <!-- 秘密通道：管理員入口 -->
+            <!-- 秘密通道 -->
             <div class="mt-12 text-center">
                 <button @click="switchView('login')" class="text-gray-400 hover:text-gray-600 text-sm transition font-medium flex items-center justify-center mx-auto space-x-1">
                     <span>🔒</span> <span>管理員通道</span>
@@ -117,61 +114,138 @@
         </div>
 
         <!-- ========================================== -->
-        <!-- 視圖 1-3: 表單視圖 (Energy, Peer, Admin)  -->
+        <!-- 視圖 1: 教學實務回饋 (符合 SOP 架構) -->
         <!-- ========================================== -->
-        <!-- 能量週記表單 -->
         <div v-if="currentView === 'energy'" class="bg-white rounded-2xl p-6 md:p-10 shadow-sm border border-gray-100">
             <button @click="switchView('home')" class="flex items-center text-sm font-medium border border-gray-300 rounded-md px-3 py-1 mb-6 hover:bg-gray-50 transition">
                 ← 返回首頁
             </button>
-            <h2 class="text-2xl font-bold text-primary-blue mb-6">能量週記</h2>
+            <h2 class="text-2xl font-bold text-primary-blue mb-2">教學實務回饋</h2>
+            <p class="text-sm text-gray-500 mb-8 border-l-4 border-blue-400 pl-3">本系統核心精神為「輔導支持」而非「績效評鑑」，期望透過即時反饋，提供符合您現場需求的教學支援。</p>
             
-            <form @submit.prevent="submitData('submit_energy')" class="space-y-6">
-                <div>
-                    <label class="block text-gray-700 mb-2">老師姓名</label>
-                    <input v-model="formEnergy.teacherName" type="text" required class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary-blue focus:border-transparent">
+            <form @submit.prevent="submitData('submit_energy')" class="space-y-8">
+                
+                <!-- 區塊一：基本派定資訊 -->
+                <div class="bg-blue-50 rounded-xl p-5 border border-blue-100 space-y-4">
+                    <h3 class="font-bold text-blue-800 mb-2 flex items-center"><span class="mr-2">📝</span> 基本派定資訊</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-1">學校名稱 <span class="text-red-500">*</span></label>
+                            <input v-model="formEnergy.schoolName" type="text" placeholder="例：光復國小" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-primary-blue outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-1">學程 <span class="text-red-500">*</span></label>
+                            <input v-model="formEnergy.program" type="text" placeholder="例：三年級上學期" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-primary-blue outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-1">聯絡信箱 (Email) <span class="text-red-500">*</span></label>
+                            <input v-model="formEnergy.email" type="email" placeholder="需接收回覆與證書" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-primary-blue outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-1">實施週期 <span class="text-red-500">*</span></label>
+                            <input v-model="formEnergy.cycle" type="text" placeholder="例：第一週 / 112-1期中" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-primary-blue outline-none">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-gray-700 text-sm font-bold mb-1">授課教師姓名 <span class="text-gray-400 font-normal text-xs">(選填)</span></label>
+                            <input v-model="formEnergy.teacherName" type="text" placeholder="可匿名或填寫姓名" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-primary-blue outline-none">
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-gray-700 mb-2">聯絡信箱 (Email)</label>
-                    <input v-model="formEnergy.email" type="email" placeholder="example@school.edu.tw" required class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary-blue focus:border-transparent">
+
+                <!-- 區塊二：實施現況 -->
+                <div class="space-y-4">
+                    <h3 class="font-bold text-gray-800 border-b pb-2 flex items-center"><span class="mr-2">🎯</span> 實施現況 (核心指標)</h3>
+                    <div>
+                        <label class="block text-gray-700 font-bold mb-2">實施單元 <span class="text-red-500">*</span></label>
+                        <input v-model="formEnergy.unit" type="text" placeholder="請填寫實際教學主題" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-primary-blue outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-bold mb-2">實施模式 <span class="text-red-500">*</span></label>
+                        <select v-model="formEnergy.mode" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-primary-blue outline-none bg-white">
+                            <option value="完整實施">完整實施</option>
+                            <option value="擷取部分融入">擷取部分融入</option>
+                            <option value="融入班級經營">融入班級經營</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-gray-700 mb-2">Q1. 能量覺察</label>
-                    <select v-model="formEnergy.energyLevel" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary-blue">
-                        <option>綠燈 (充飽電)</option>
-                        <option>黃燈 (有點累)</option>
-                        <option>紅燈 (耗盡狀態)</option>
-                    </select>
+
+                <!-- 區塊三：三級檢核量表 (精緻化 UI) -->
+                <div class="space-y-4">
+                    <h3 class="font-bold text-gray-800 border-b pb-2 flex items-center"><span class="mr-2">🚦</span> 學生學習成效 (三級檢核量表) <span class="text-red-500 ml-1">*</span></h3>
+                    
+                    <div class="grid grid-cols-1 gap-3">
+                        <!-- 綠燈 -->
+                        <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none transition-all duration-200" :class="{'border-green-500 ring-2 ring-green-500 bg-green-50': formEnergy.effectiveness.includes('🟢')}">
+                            <input type="radio" v-model="formEnergy.effectiveness" value="🟢 活躍（綠燈）：討論熱烈，達成教學預期目標。" required class="sr-only">
+                            <span class="flex flex-1">
+                                <span class="flex flex-col">
+                                    <span class="block text-base font-bold text-green-700">🟢 活躍 (綠燈)</span>
+                                    <span class="mt-1 flex items-center text-sm text-gray-600">學生討論熱烈，順利達成教學預期目標。</span>
+                                </span>
+                            </span>
+                            <svg v-if="formEnergy.effectiveness.includes('🟢')" class="h-6 w-6 text-green-600 self-center" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                        </label>
+                        
+                        <!-- 黃燈 -->
+                        <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none transition-all duration-200" :class="{'border-yellow-500 ring-2 ring-yellow-500 bg-yellow-50': formEnergy.effectiveness.includes('🟡')}">
+                            <input type="radio" v-model="formEnergy.effectiveness" value="🟡 平穩（黃燈）：參與度一般，互動符合常態。" class="sr-only">
+                            <span class="flex flex-1">
+                                <span class="flex flex-col">
+                                    <span class="block text-base font-bold text-yellow-600">🟡 平穩 (黃燈)</span>
+                                    <span class="mt-1 flex items-center text-sm text-gray-600">參與度一般，互動狀況符合平時常態。</span>
+                                </span>
+                            </span>
+                            <svg v-if="formEnergy.effectiveness.includes('🟡')" class="h-6 w-6 text-yellow-600 self-center" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                        </label>
+                        
+                        <!-- 紅燈 -->
+                        <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none transition-all duration-200" :class="{'border-red-500 ring-2 ring-red-500 bg-red-50': formEnergy.effectiveness.includes('🔴')}">
+                            <input type="radio" v-model="formEnergy.effectiveness" value="🔴 需協助（紅燈）：學生抗拒、無感，或教師遭遇實務困境。" class="sr-only">
+                            <span class="flex flex-1">
+                                <span class="flex flex-col">
+                                    <span class="block text-base font-bold text-red-600">🔴 需協助 (紅燈)</span>
+                                    <span class="mt-1 flex items-center text-sm text-gray-600">學生抗拒、無感，或教師遭遇實務困境。(系統將主動提供支援)</span>
+                                </span>
+                            </span>
+                            <svg v-if="formEnergy.effectiveness.includes('🔴')" class="h-6 w-6 text-red-600 self-center" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                        </label>
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-gray-700 mb-2">Q2. 教材直覺</label>
-                    <select v-model="formEnergy.materialIntuition" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary-blue">
-                        <option>順手</option>
-                        <option>卡卡的，需要微調</option>
-                        <option>完全不順，考慮重構</option>
-                    </select>
+
+                <!-- 區塊四：教學質性反思 -->
+                <div class="space-y-4">
+                    <h3 class="font-bold text-gray-800 border-b pb-2 flex items-center"><span class="mr-2">💡</span> 教學質性反思</h3>
+                    <div>
+                        <label class="block text-gray-700 font-bold mb-2">教學觀察心得 <span class="text-red-500">*</span></label>
+                        <p class="text-xs text-gray-500 mb-2">請紀錄課堂的亮點，或是面臨到的具體挑戰。</p>
+                        <textarea v-model="formEnergy.observation" rows="3" required class="w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-primary-blue outline-none"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-bold mb-2">親師生回饋 <span class="text-gray-400 font-normal text-xs">(選填)</span></label>
+                        <p class="text-xs text-gray-500 mb-2">若有具體行為轉變案例或學生反思金句，歡迎與我們分享。</p>
+                        <textarea v-model="formEnergy.feedback" rows="3" class="w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-primary-blue outline-none"></textarea>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-4 rounded-md border border-gray-200">
+                        <label class="block font-bold text-gray-700 mb-2">📷 數位學習歷程 <span class="text-gray-400 font-normal text-xs">(選填附件)</span></label>
+                        <p class="text-xs text-gray-500 mb-3">歡迎上傳學習單或互動花絮照片（作為未來推廣報告素材）</p>
+                        <input type="file" @change="e => handleFileUpload(e, 'energy')" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-white file:text-gray-700 file:border file:border-gray-300 hover:file:bg-gray-50">
+                        <p v-if="uploadStatus.energy" class="text-xs text-green-600 mt-2 font-bold">{{ uploadStatus.energy }}</p>
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-gray-700 mb-2">Q3. 隨喜亮點</label>
-                    <textarea v-model="formEnergy.highlights" rows="3" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary-blue"></textarea>
-                </div>
-                <div>
-                    <label class="block text-gray-700 mb-2">Q4. 支援需求</label>
-                    <textarea v-model="formEnergy.supportNeeded" rows="3" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary-blue"></textarea>
-                </div>
-                <div class="bg-gray-50 p-4 rounded-md border border-gray-200">
-                    <label class="block font-medium text-gray-700 mb-2">📷 附件 (選填)</label>
-                    <input type="file" @change="e => handleFileUpload(e, 'energy')" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-white file:text-gray-700 file:border file:border-gray-300 hover:file:bg-gray-50">
-                    <p v-if="uploadStatus.energy" class="text-xs text-green-600 mt-2">{{ uploadStatus.energy }}</p>
-                </div>
-                <button type="submit" :disabled="isSubmitting" class="w-full bg-primary-blue text-white font-bold py-3 rounded-md hover:bg-blue-600 transition flex justify-center items-center">
-                    <span v-if="!isSubmitting">送出週記</span>
-                    <div v-else class="loader"></div>
+
+                <!-- 送出按鈕 -->
+                <button type="submit" :disabled="isSubmitting" class="w-full bg-primary-blue text-white font-bold py-4 rounded-xl hover:bg-blue-600 transition shadow-md flex justify-center items-center text-lg">
+                    <span v-if="!isSubmitting">送出回饋紀錄</span>
+                    <div v-else class="loader border-t-white"></div>
                 </button>
             </form>
         </div>
 
-        <!-- 小組共學表單 -->
+        <!-- ========================================== -->
+        <!-- 視圖 2: 小組共學表單 -->
+        <!-- ========================================== -->
         <div v-if="currentView === 'peer'" class="bg-white rounded-2xl p-6 md:p-10 shadow-sm border border-gray-100">
             <button @click="switchView('home')" class="flex items-center text-sm font-medium border border-gray-300 rounded-md px-3 py-1 mb-6 hover:bg-gray-50 transition">
                 ← 返回首頁
@@ -180,43 +254,45 @@
             
             <form @submit.prevent="submitData('submit_peer')" class="space-y-6">
                 <div>
-                    <label class="block text-gray-700 mb-2">小組成員 (請列出姓名)</label>
-                    <input v-model="formPeer.teamMembers" type="text" placeholder="例如：王小明、李大華" required class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary-green">
+                    <label class="block text-gray-700 mb-2 font-bold">小組成員 <span class="text-xs font-normal text-gray-500">(請列出姓名)</span> *</label>
+                    <input v-model="formPeer.teamMembers" type="text" placeholder="例如：王小明、李大華" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-primary-green outline-none">
                 </div>
                 <div>
-                    <label class="block text-gray-700 mb-2">聯絡信箱 (Email)</label>
-                    <input v-model="formPeer.email" type="email" placeholder="小組代表信箱" required class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary-green">
+                    <label class="block text-gray-700 mb-2 font-bold">聯絡信箱 (Email) *</label>
+                    <input v-model="formPeer.email" type="email" placeholder="小組代表信箱" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-primary-green outline-none">
                 </div>
                 <div>
-                    <label class="block text-gray-700 mb-2">共備單元/主題</label>
-                    <input v-model="formPeer.topic" type="text" required class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary-green">
+                    <label class="block text-gray-700 mb-2 font-bold">共備單元/主題 *</label>
+                    <input v-model="formPeer.topic" type="text" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-primary-green outline-none">
                 </div>
                 <div>
-                    <label class="block text-gray-700 mb-2">本學期亮點 (Highlight)</label>
-                    <textarea v-model="formPeer.highlight" rows="3" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary-green"></textarea>
+                    <label class="block text-gray-700 mb-2 font-bold">本學期亮點 (Highlight)</label>
+                    <textarea v-model="formPeer.highlight" rows="3" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-primary-green outline-none"></textarea>
                 </div>
                 <div>
-                    <label class="block text-gray-700 mb-2">遇到的卡點 (Challenge)</label>
-                    <textarea v-model="formPeer.challenge" rows="3" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary-green"></textarea>
+                    <label class="block text-gray-700 mb-2 font-bold">遇到的卡點 (Challenge)</label>
+                    <textarea v-model="formPeer.challenge" rows="3" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-primary-green outline-none"></textarea>
                 </div>
                 <div>
-                    <label class="block text-gray-700 mb-2">下學期新玩法 (Next Step)</label>
-                    <textarea v-model="formPeer.nextStep" rows="3" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary-green"></textarea>
+                    <label class="block text-gray-700 mb-2 font-bold">下學期新玩法 (Next Step)</label>
+                    <textarea v-model="formPeer.nextStep" rows="3" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-primary-green outline-none"></textarea>
                 </div>
-                <div class="border border-primary-green p-4 rounded-md">
-                    <label class="block font-medium text-primary-green mb-2">🖼️ 上傳共學/教學照片</label>
+                <div class="border border-primary-green p-4 rounded-md bg-green-50">
+                    <label class="block font-medium text-primary-green mb-2 font-bold">🖼️ 上傳共學/教學照片 <span class="text-xs font-normal">(選填)</span></label>
                     <input type="file" @change="e => handleFileUpload(e, 'peer')" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-white file:text-gray-700 file:border file:border-gray-300 hover:file:bg-gray-50">
                     <p class="text-xs text-gray-500 mt-2">請上傳 PPT 截圖或學生上課照片</p>
-                    <p v-if="uploadStatus.peer" class="text-xs text-green-600 mt-2">{{ uploadStatus.peer }}</p>
+                    <p v-if="uploadStatus.peer" class="text-xs text-green-600 mt-2 font-bold">{{ uploadStatus.peer }}</p>
                 </div>
-                <button type="submit" :disabled="isSubmitting" class="w-full bg-primary-green text-white font-bold py-3 rounded-md hover:bg-green-700 transition flex justify-center items-center">
-                    <span v-if="!isSubmitting">送出紀錄</span>
-                    <div v-else class="loader"></div>
+                <button type="submit" :disabled="isSubmitting" class="w-full bg-primary-green text-white font-bold py-4 rounded-xl hover:bg-green-700 transition shadow-md flex justify-center items-center text-lg">
+                    <span v-if="!isSubmitting">送出共學紀錄</span>
+                    <div v-else class="loader border-t-white"></div>
                 </button>
             </form>
         </div>
 
-        <!-- 行政影響力檢核表單 -->
+        <!-- ========================================== -->
+        <!-- 視圖 3: 行政影響力檢核表單 -->
+        <!-- ========================================== -->
         <div v-if="currentView === 'admin'" class="bg-white rounded-2xl p-6 md:p-10 shadow-sm border border-gray-100">
             <button @click="switchView('home')" class="flex items-center text-sm font-medium border border-gray-300 rounded-md px-3 py-1 mb-6 hover:bg-gray-50 transition">
                 ← 返回首頁
@@ -225,8 +301,8 @@
             
             <form @submit.prevent="submitData('submit_admin')" class="space-y-6">
                 <div>
-                    <label class="block font-bold text-gray-800 mb-2">填表人信箱 (Email)</label>
-                    <input v-model="formAdmin.email" type="email" placeholder="您的聯絡信箱" required class="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-primary-cyan">
+                    <label class="block font-bold text-gray-800 mb-2">填表人信箱 (Email) *</label>
+                    <input v-model="formAdmin.email" type="email" placeholder="您的聯絡信箱" required class="w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-primary-cyan outline-none">
                 </div>
                 <div>
                     <label class="block font-bold text-gray-800 mb-3">1. 校園氛圍觀察 (可複選)</label>
@@ -245,25 +321,25 @@
                 </div>
                 <div>
                     <label class="block font-bold text-gray-800 mb-2">3. 幸福小故事</label>
-                    <textarea v-model="formAdmin.happyStory" rows="4" placeholder="請分享一個具體改變的故事..." class="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-primary-cyan"></textarea>
+                    <textarea v-model="formAdmin.happyStory" rows="4" placeholder="請分享一個具體改變的故事..." class="w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-primary-cyan outline-none"></textarea>
                 </div>
                 <div>
                     <label class="block font-bold text-gray-800 mb-2">4. 永續合作意願</label>
-                    <select v-model="formAdmin.willingness" class="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-primary-cyan">
+                    <select v-model="formAdmin.willingness" class="w-full border border-gray-300 rounded-md p-3 focus:ring-2 focus:ring-primary-cyan outline-none bg-white">
                         <option>非常願意</option>
                         <option>有意願，但需要調整</option>
                         <option>暫不考慮</option>
                     </select>
                 </div>
-                <button type="submit" :disabled="isSubmitting" class="w-full bg-primary-cyan text-white font-bold py-3 rounded-md hover:bg-cyan-600 transition flex justify-center items-center">
+                <button type="submit" :disabled="isSubmitting" class="w-full bg-primary-cyan text-white font-bold py-4 rounded-xl hover:bg-cyan-600 transition shadow-md flex justify-center items-center text-lg">
                     <span v-if="!isSubmitting">送出檢核</span>
-                    <div v-else class="loader"></div>
+                    <div v-else class="loader border-t-white"></div>
                 </button>
             </form>
         </div>
 
         <!-- ========================================== -->
-        <!-- 視圖 4: 管理員登入介面 (Login View) -->
+        <!-- 視圖 4 & 5: 管理員登入與儀表板 (保留架構) -->
         <!-- ========================================== -->
         <div v-if="currentView === 'login'" class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 max-w-md mx-auto mt-10">
             <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">後台管理員登入</h2>
@@ -282,73 +358,56 @@
             </div>
         </div>
 
-        <!-- ========================================== -->
-        <!-- 視圖 5: 管理員儀表板 (Dashboard View) -->
-        <!-- ========================================== -->
         <div v-if="currentView === 'dashboard'" class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 min-h-[500px]">
             <div class="flex justify-between items-center mb-6 border-b pb-4">
                 <h2 class="text-2xl font-bold text-gray-800">管理員儀表板</h2>
                 <button @click="logout" class="text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 py-1 px-3 rounded transition">登出</button>
             </div>
-
-            <!-- Dashboard 頁籤 (Tabs) -->
             <div class="flex space-x-2 mb-6 overflow-x-auto pb-2">
-                <button @click="activeTab = 'energy'" :class="{'bg-primary-blue text-white shadow': activeTab === 'energy', 'bg-gray-100 text-gray-600 hover:bg-gray-200': activeTab !== 'energy'}" class="px-5 py-2 rounded-full font-medium text-sm whitespace-nowrap transition">能量週記</button>
+                <button @click="activeTab = 'energy'" :class="{'bg-primary-blue text-white shadow': activeTab === 'energy', 'bg-gray-100 text-gray-600 hover:bg-gray-200': activeTab !== 'energy'}" class="px-5 py-2 rounded-full font-medium text-sm whitespace-nowrap transition">教學實務回饋</button>
                 <button @click="activeTab = 'peer'" :class="{'bg-primary-green text-white shadow': activeTab === 'peer', 'bg-gray-100 text-gray-600 hover:bg-gray-200': activeTab !== 'peer'}" class="px-5 py-2 rounded-full font-medium text-sm whitespace-nowrap transition">小組共學</button>
                 <button @click="activeTab = 'admin'" :class="{'bg-primary-cyan text-white shadow': activeTab === 'admin', 'bg-gray-100 text-gray-600 hover:bg-gray-200': activeTab !== 'admin'}" class="px-5 py-2 rounded-full font-medium text-sm whitespace-nowrap transition">行政檢核</button>
             </div>
 
-            <!-- 資料列表 -->
             <div class="space-y-4">
                 <div v-if="!dashboardData[activeTab] || dashboardData[activeTab].length === 0" class="text-center py-12 text-gray-400">
                     目前沒有相關的提問與回饋資料。
                 </div>
-
                 <div v-for="item in dashboardData[activeTab]" :key="item.row" class="border border-gray-200 rounded-lg p-5 hover:shadow-sm transition relative bg-gray-50">
                     <div class="flex justify-between items-start mb-2">
                         <div class="text-xs text-gray-500 font-mono">{{ item.date || '未知時間' }}</div>
-                        <!-- 狀態標籤 -->
                         <span v-if="item.status === '✅ 已回覆'" class="text-xs font-bold text-green-700 bg-green-100 px-2 py-1 rounded border border-green-200">✅ 已回覆</span>
                         <span v-else class="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded border border-red-200">🔴 未回覆</span>
                     </div>
-                    
                     <h3 class="text-lg font-bold text-gray-800 mb-1">{{ item.name || item.topic || '匿名回饋' }}</h3>
                     <div class="text-sm text-gray-500 mb-3 flex items-center">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                         {{ item.email || '未提供信箱' }}
                     </div>
-                    
-                    <p class="text-gray-700 text-sm mb-4 bg-white p-3 rounded border">{{ item.content || item.highlights || item.happyStory || '無詳細內容' }}</p>
-                    
-                    <!-- 動作區與回覆紀錄 -->
+                    <p class="text-gray-700 text-sm mb-4 bg-white p-3 rounded border whitespace-pre-line">{{ item.content }}</p>
                     <div v-if="item.status !== '✅ 已回覆'">
                         <button @click="openReplyModal(item, activeTab)" class="text-sm bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700 transition shadow flex items-center">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
                             撰寫回覆並寄出
                         </button>
                     </div>
                     <div v-else class="mt-4 bg-green-50 p-3 rounded-md border-l-4 border-green-500">
-                        <div class="text-xs font-bold text-green-800 mb-1">您的回覆紀錄：</div>
+                        <div class="text-xs font-bold text-green-800 mb-1">輔導支援回覆：</div>
                         <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ item.replyRecord }}</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ========================================== -->
-        <!-- 全域 Modal: 撰寫回覆信件 -->
-        <!-- ========================================== -->
+        <!-- 回覆信件 Modal -->
         <transition name="modal">
             <div v-if="replyModal.show" class="fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
                 <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl relative">
                     <button @click="closeReplyModal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
-                    <h3 class="text-xl font-bold text-gray-800 mb-1">回覆提問</h3>
+                    <h3 class="text-xl font-bold text-gray-800 mb-1">支援與回覆</h3>
                     <p class="text-sm text-gray-500 mb-4">收件人：{{ replyModal.item?.email }}</p>
-                    
-                    <textarea v-model="replyModal.content" rows="6" placeholder="請輸入要寄送給老師的回覆內容..." class="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-gray-800 mb-4"></textarea>
-                    
+                    <textarea v-model="replyModal.content" rows="6" placeholder="請輸入要寄送給老師的支援與回覆內容..." class="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-gray-800 mb-4"></textarea>
                     <div class="flex justify-end space-x-3">
                         <button @click="closeReplyModal" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition">取消</button>
                         <button @click="submitReply" :disabled="replyModal.isSending" class="px-6 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 transition shadow flex items-center">
@@ -367,25 +426,37 @@
 
         createApp({
             setup() {
-                // =============== 系統設定 ===============
-                const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';
+                // =============== 系統設定 (與最新的 GAS API 串接) ===============
+                // ⚠️ 已套用您的 GAS URL
+                const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw7TpBxbxzxj3xbcbdUsgAn63S5OXLUWwpXVA4dNFUwAorCHOXp66z4pF4lS5tbqika/exec';
                 const API_KEY = 'gem-happiness-2026-secure-key';
 
-                // =============== 狀態管理 ===============
                 const currentView = ref('home'); 
                 const isSubmitting = ref(false);
                 const toast = reactive({ show: false, message: '', isError: false });
                 const uploadStatus = reactive({ energy: '', peer: '' });
 
-                // =============== 後台管理狀態 ===============
                 const adminPassword = ref('');
-                const activeTab = ref('energy'); // 'energy', 'peer', 'admin'
-                // 存放後端抓回來的 Dashboard 資料
+                const activeTab = ref('energy'); 
                 const dashboardData = ref({ energy: [], peer: [], admin: [] });
                 const replyModal = reactive({ show: false, item: null, sheet: '', content: '', isSending: false });
 
-                // =============== 表單資料模型 ===============
-                const getInitialEnergy = () => ({ teacherName: '', email: '', energyLevel: '綠燈 (充飽電)', materialIntuition: '順手', highlights: '', supportNeeded: '', attachmentBase64: '', attachmentName: '' });
+                // =============== 表單資料模型 (符合 SOP 的全新 14 欄位設計) ===============
+                const getInitialEnergy = () => ({ 
+                    schoolName: '', 
+                    program: '', 
+                    teacherName: '', 
+                    email: '', 
+                    cycle: '', 
+                    unit: '', 
+                    mode: '完整實施', 
+                    effectiveness: '', // 預設空白，強制老師點擊燈號
+                    observation: '', 
+                    feedback: '', 
+                    attachmentBase64: '', 
+                    attachmentName: '' 
+                });
+                
                 const getInitialPeer = () => ({ teamMembers: '', email: '', topic: '', highlight: '', challenge: '', nextStep: '', photoBase64: '', photoName: '' });
                 const getInitialAdmin = () => ({ email: '', campusVibe: [], adminSupport: [], happyStory: '', willingness: '非常願意' });
 
@@ -403,7 +474,7 @@
                     toast.message = message;
                     toast.isError = isError;
                     toast.show = true;
-                    setTimeout(() => { toast.show = false; }, 3500);
+                    setTimeout(() => { toast.show = false; }, 4000);
                 };
 
                 const handleFileUpload = (event, type) => {
@@ -414,7 +485,7 @@
                         event.target.value = '';
                         return;
                     }
-                    uploadStatus[type] = '檔案處理中...';
+                    uploadStatus[type] = '檔案轉碼中...';
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         const base64 = e.target.result;
@@ -435,10 +506,12 @@
                 };
 
                 const submitData = async (action) => {
-                    if(GAS_WEB_APP_URL.includes('YOUR_DEPLOYMENT_ID')) {
-                        showToast('開發模式：請先在原始碼中設定您的 GAS_WEB_APP_URL！', true);
+                    // 特別防呆：檢查是否已選擇燈號
+                    if (action === 'submit_energy' && !formEnergy.value.effectiveness) {
+                        showToast('請選擇「學生學習成效」的燈號！', true);
                         return;
                     }
+
                     isSubmitting.value = true;
                     let payload = {};
                     switch(action) {
@@ -455,7 +528,7 @@
                         });
                         const result = await response.json();
                         if (result.success) {
-                            showToast('🎉 資料已成功送出！感謝您的回饋。');
+                            showToast('🎉 表單已成功送出！感謝您的回饋。');
                             if(action === 'submit_energy') formEnergy.value = getInitialEnergy();
                             if(action === 'submit_peer') formPeer.value = getInitialPeer();
                             if(action === 'submit_admin') formAdmin.value = getInitialAdmin();
@@ -466,28 +539,15 @@
                             throw new Error(result.message || '伺服器拒絕請求');
                         }
                     } catch (error) {
-                        showToast('❌ 送出失敗，請檢查網路連線或稍後再試。', true);
+                        console.error(error);
+                        showToast('❌ 送出失敗，請檢查網路連線或聯繫管理員。', true);
                     } finally {
                         isSubmitting.value = false;
                     }
                 };
 
-                // =============== 後台管理邏輯 ===============
-                
-                // 1. 登入並獲取儀表板資料
+                // =============== 後台邏輯 ===============
                 const handleLogin = async () => {
-                    if(GAS_WEB_APP_URL.includes('YOUR_DEPLOYMENT_ID')) {
-                        showToast('開發模式：請設定 GAS URL。目前自動套用假資料測試介面。', false);
-                        // DEMO 用假資料 (若無 GAS 時可預覽 UI)
-                        dashboardData.value = {
-                            energy: [{ row: 2, date: '2026/03/12', email: 'test@school.edu.tw', name: '王老師', content: '教材有點卡卡的，希望有教具包。', status: '未回覆' }],
-                            peer: [{ row: 2, date: '2026/03/10', email: 'group@school.edu.tw', topic: '數學素養共備', content: '希望能有更多跨校交流的機會。', status: '✅ 已回覆', replyRecord: '已安排下個月的跨校觀課喔！' }],
-                            admin: []
-                        };
-                        switchView('dashboard');
-                        return;
-                    }
-
                     isSubmitting.value = true;
                     try {
                         const response = await fetch(GAS_WEB_APP_URL, {
@@ -501,7 +561,7 @@
                         });
                         const result = await response.json();
                         if (result.success) {
-                            dashboardData.value = result.data; // 預期後端回傳 { energy: [], peer: [], admin: [] }
+                            dashboardData.value = result.data; 
                             switchView('dashboard');
                             showToast('登入成功！');
                         } else {
@@ -521,7 +581,6 @@
                     showToast('已登出系統');
                 };
 
-                // 2. 開啟回覆視窗
                 const openReplyModal = (item, sheetType) => {
                     replyModal.item = item;
                     replyModal.sheet = sheetType;
@@ -531,22 +590,12 @@
 
                 const closeReplyModal = () => {
                     replyModal.show = false;
-                    setTimeout(() => { replyModal.item = null; }, 300); // 等待過渡動畫結束
+                    setTimeout(() => { replyModal.item = null; }, 300); 
                 };
 
-                // 3. 送出回覆信件
                 const submitReply = async () => {
                     if (!replyModal.content.trim()) {
                         showToast('請輸入回覆內容', true);
-                        return;
-                    }
-
-                    if(GAS_WEB_APP_URL.includes('YOUR_DEPLOYMENT_ID')) {
-                        // DEMO 測試模式
-                        replyModal.item.status = '✅ 已回覆';
-                        replyModal.item.replyRecord = replyModal.content;
-                        showToast('【測試模式】回覆成功！');
-                        closeReplyModal();
                         return;
                     }
 
@@ -570,15 +619,14 @@
                         const result = await response.json();
                         if (result.success) {
                             showToast('✉️ 回覆信件已成功寄出！');
-                            // 本地更新狀態，無須重新抓取 API
                             replyModal.item.status = '✅ 已回覆';
-                            replyModal.item.replyRecord = replyModal.content;
+                            replyModal.item.replyRecord = `[系統紀錄] 回覆：\n${replyModal.content}`;
                             closeReplyModal();
                         } else {
                             throw new Error(result.message || '寄送失敗');
                         }
                     } catch (error) {
-                        showToast('❌ 寄件失敗，請檢查網路或系統日誌。', true);
+                        showToast('❌ 寄件失敗，請檢查網路。', true);
                     } finally {
                         replyModal.isSending = false;
                     }
