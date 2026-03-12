@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>幸福教學回饋中心</title>
+    
+    <!-- 引入 Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 引入 Vue 3 (CDN) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+    <!-- Tailwind 自定義設定 (還原設計稿顏色) -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'app-bg': '#f4f6f8',
+                        'card-1-start': '#c9f2ed',
+                        'card-1-end': '#fadce8',
+                        'card-2-bg': '#d3deec',
+                        'card-3-start': '#d5ccfa',
+                        'card-3-end': '#8ebff9',
+                        'dark-badge': '#2d2d2d',
+                        'primary-blue': '#1a73e8',
+                        'primary-green': '#1e8e3e',
+                        'primary-cyan': '#12b5cb'
+                    },
+                    fontFamily: {
+                        sans: ['"Noto Sans TC"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 隱藏原生捲軸但保留捲動功能 */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+        body { background-color: #f4f6f8; color: #333; }
+        /* 載入動畫 */
+        .loader {
+            border: 4px solid #f3f3f3; border-top: 4px solid #3498db;
+            border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* 模糊背景過渡 */
+        .modal-enter-active, .modal-leave-active { transition: opacity 0.3s; }
+        .modal-enter-from, .modal-leave-to { opacity: 0; }
+    </style>
+</head>
+<body class="antialiased min-h-screen">
+    <div id="app" class="max-w-3xl mx-auto px-4 py-8 relative">
+        
+        <!-- 全域遮罩與通知 (Toast/Modal) -->
+        <div v-if="toast.show" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[100] px-6 py-3 rounded-lg shadow-lg text-white transition-all duration-300" :class="toast.isError ? 'bg-red-500' : 'bg-green-500'">
+            {{ toast.message }}
+        </div>
+
+        <!-- Header -->
+        <div class="flex items-center justify-center relative mb-12">
+            <div class="absolute left-0 top-0 bg-dark-badge text-white text-xs px-3 py-1 rounded-sm shadow-sm">
+                幸福教學回饋系統
+            </div>
+            <h1 class="text-3xl font-bold text-gray-700 tracking-wider mt-10 md:mt-0">幸福教學回饋中心</h1>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- 視圖 0: 主導覽頁 (Main Navigation) -->
+        <!-- ========================================== -->
+        <div v-if="currentView === 'home'" class="space-y-6 pb-10">
+            
+            <!-- 卡片 1: 能量週記 -->
+            <div @click="switchView('energy')" class="bg-gradient-to-r from-card-1-start to-card-1-end rounded-3xl p-8 cursor-pointer transform transition duration-300 hover:-translate-y-1 hover:shadow-md flex flex-col items-center justify-center text-center">
+                <div class="bg-blue-500 text-white p-2 rounded-md mb-4 shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 8h16M4 16h16" />
+                      <rect x="2" y="6" width="20" height="12" rx="2" ry="2" />
+                      <path d="M22 10v4" />
+                      <rect x="5" y="9" width="10" height="6" rx="1" ry="1" fill="currentColor" />
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">每週能量週記</h2>
+                <p class="text-gray-600">微觀：每週一次的暫停與覺察</p>
+            </div>
+
+            <!-- 卡片 2: 小組共學 -->
+            <div @click="switchView('peer')" class="bg-card-2-bg rounded-3xl p-8 cursor-pointer transform transition duration-300 hover:-translate-y-1 hover:shadow-md flex flex-col items-center justify-center text-center">
+                <div class="text-primary-green mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">三人小組共學</h2>
+                <p class="text-gray-600">中觀：期末議課與共備紀錄</p>
+            </div>
+
+            <!-- 卡片 3: 行政影響力 -->
+            <div @click="switchView('admin')" class="bg-gradient-to-r from-card-3-start to-card-3-end rounded-3xl p-8 cursor-pointer transform transition duration-300 hover:-translate-y-1 hover:shadow-md flex flex-col items-center justify-center text-center">
+                <div class="bg-primary-cyan text-white p-2 rounded-md mb-4 shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">行政影響力檢核</h2>
+                <p class="text-gray-600">宏觀：校園氛圍與資源盤點</p>
+            </div>
+
+            <!-- 秘密通道：管理員入口 -->
+            <div class="mt-12 text-center">
+                <button @click="switchView('login')" class="text-gray-400 hover:text-gray-600 text-sm transition font-medium flex items-center justify-center mx-auto space-x-1">
+                    <span>🔒</span> <span>管理員通道</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- 視圖 1-3: 表單視圖 (Energy, Peer, Admin)  -->
+        <!-- ========================================== -->
+        <!-- 能量週記表單 -->
+        <div v-if="currentView === 'energy'" class="bg-white rounded-2xl p-6 md:p-10 shadow-sm border border-gray-100">
+            <button @click="switchView('home')" class="flex items-center text-sm font-medium border border-gray-300 rounded-md px-3 py-1 mb-6 hover:bg-gray-50 transition">
+                ← 返回首頁
+            </button>
+            <h2 class="text-2xl font-bold text-primary-blue mb-6">能量週記</h2>
+            
+            <form @submit.prevent="submitData('submit_energy')" class="space-y-6">
+                <div>
+                    <label class="block text-gray-700 mb-2">老師姓名</label>
+                    <input v-model="formEnergy.teacherName" type="text" required class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary-blue focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">聯絡信箱 (Email)</label>
+                    <input v-model="formEnergy.email" type="email" placeholder="example@school.edu.tw" required class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary-blue focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">Q1. 能量覺察</label>
+                    <select v-model="formEnergy.energyLevel" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary-blue">
+                        <option>綠燈 (充飽電)</option>
+                        <option>黃燈 (有點累)</option>
+                        <option>紅燈 (耗盡狀態)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">Q2. 教材直覺</label>
+                    <select v-model="formEnergy.materialIntuition" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary-blue">
+                        <option>順手</option>
+                        <option>卡卡的，需要微調</option>
+                        <option>完全不順，考慮重構</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">Q3. 隨喜亮點</label>
+                    <textarea v-model="formEnergy.highlights" rows="3" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary-blue"></textarea>
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">Q4. 支援需求</label>
+                    <textarea v-model="formEnergy.supportNeeded" rows="3" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary-blue"></textarea>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-md border border-gray-200">
+                    <label class="block font-medium text-gray-700 mb-2">📷 附件 (選填)</label>
+                    <input type="file" @change="e => handleFileUpload(e, 'energy')" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-white file:text-gray-700 file:border file:border-gray-300 hover:file:bg-gray-50">
+                    <p v-if="uploadStatus.energy" class="text-xs text-green-600 mt-2">{{ uploadStatus.energy }}</p>
+                </div>
+                <button type="submit" :disabled="isSubmitting" class="w-full bg-primary-blue text-white font-bold py-3 rounded-md hover:bg-blue-600 transition flex justify-center items-center">
+                    <span v-if="!isSubmitting">送出週記</span>
+                    <div v-else class="loader"></div>
+                </button>
+            </form>
+        </div>
+
+        <!-- 小組共學表單 -->
+        <div v-if="currentView === 'peer'" class="bg-white rounded-2xl p-6 md:p-10 shadow-sm border border-gray-100">
+            <button @click="switchView('home')" class="flex items-center text-sm font-medium border border-gray-300 rounded-md px-3 py-1 mb-6 hover:bg-gray-50 transition">
+                ← 返回首頁
+            </button>
+            <h2 class="text-2xl font-bold text-primary-green mb-6">小組共學紀錄</h2>
+            
+            <form @submit.prevent="submitData('submit_peer')" class="space-y-6">
+                <div>
+                    <label class="block text-gray-700 mb-2">小組成員 (請列出姓名)</label>
+                    <input v-model="formPeer.teamMembers" type="text" placeholder="例如：王小明、李大華" required class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary-green">
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">聯絡信箱 (Email)</label>
+                    <input v-model="formPeer.email" type="email" placeholder="小組代表信箱" required class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary-green">
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">共備單元/主題</label>
+                    <input v-model="formPeer.topic" type="text" required class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary-green">
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">本學期亮點 (Highlight)</label>
+                    <textarea v-model="formPeer.highlight" rows="3" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary-green"></textarea>
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">遇到的卡點 (Challenge)</label>
+                    <textarea v-model="formPeer.challenge" rows="3" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary-green"></textarea>
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">下學期新玩法 (Next Step)</label>
+                    <textarea v-model="formPeer.nextStep" rows="3" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary-green"></textarea>
+                </div>
+                <div class="border border-primary-green p-4 rounded-md">
+                    <label class="block font-medium text-primary-green mb-2">🖼️ 上傳共學/教學照片</label>
+                    <input type="file" @change="e => handleFileUpload(e, 'peer')" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-white file:text-gray-700 file:border file:border-gray-300 hover:file:bg-gray-50">
+                    <p class="text-xs text-gray-500 mt-2">請上傳 PPT 截圖或學生上課照片</p>
+                    <p v-if="uploadStatus.peer" class="text-xs text-green-600 mt-2">{{ uploadStatus.peer }}</p>
+                </div>
+                <button type="submit" :disabled="isSubmitting" class="w-full bg-primary-green text-white font-bold py-3 rounded-md hover:bg-green-700 transition flex justify-center items-center">
+                    <span v-if="!isSubmitting">送出紀錄</span>
+                    <div v-else class="loader"></div>
+                </button>
+            </form>
+        </div>
+
+        <!-- 行政影響力檢核表單 -->
+        <div v-if="currentView === 'admin'" class="bg-white rounded-2xl p-6 md:p-10 shadow-sm border border-gray-100">
+            <button @click="switchView('home')" class="flex items-center text-sm font-medium border border-gray-300 rounded-md px-3 py-1 mb-6 hover:bg-gray-50 transition">
+                ← 返回首頁
+            </button>
+            <h2 class="text-2xl font-bold text-primary-cyan mb-6">行政影響力檢核</h2>
+            
+            <form @submit.prevent="submitData('submit_admin')" class="space-y-6">
+                <div>
+                    <label class="block font-bold text-gray-800 mb-2">填表人信箱 (Email)</label>
+                    <input v-model="formAdmin.email" type="email" placeholder="您的聯絡信箱" required class="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-primary-cyan">
+                </div>
+                <div>
+                    <label class="block font-bold text-gray-800 mb-3">1. 校園氛圍觀察 (可複選)</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-3 cursor-pointer"><input type="checkbox" v-model="formAdmin.campusVibe" value="學生變得比較有禮貌" class="form-checkbox h-5 w-5 text-primary-cyan rounded"><span class="text-gray-700">學生變得比較有禮貌</span></label>
+                        <label class="flex items-center space-x-3 cursor-pointer"><input type="checkbox" v-model="formAdmin.campusVibe" value="同儕衝突減少" class="form-checkbox h-5 w-5 text-primary-cyan rounded"><span class="text-gray-700">同儕衝突減少</span></label>
+                        <label class="flex items-center space-x-3 cursor-pointer"><input type="checkbox" v-model="formAdmin.campusVibe" value="辦公室氣氛變好" class="form-checkbox h-5 w-5 text-primary-cyan rounded"><span class="text-gray-700">辦公室氣氛變好</span></label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-bold text-gray-800 mb-3">2. 行政支援盤點 (可複選)</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-3 cursor-pointer"><input type="checkbox" v-model="formAdmin.adminSupport" value="教材資源充足" class="form-checkbox h-5 w-5 text-primary-cyan rounded"><span class="text-gray-700">教材資源充足</span></label>
+                        <label class="flex items-center space-x-3 cursor-pointer"><input type="checkbox" v-model="formAdmin.adminSupport" value="已安排師資培訓" class="form-checkbox h-5 w-5 text-primary-cyan rounded"><span class="text-gray-700">已安排師資培訓</span></label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-bold text-gray-800 mb-2">3. 幸福小故事</label>
+                    <textarea v-model="formAdmin.happyStory" rows="4" placeholder="請分享一個具體改變的故事..." class="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-primary-cyan"></textarea>
+                </div>
+                <div>
+                    <label class="block font-bold text-gray-800 mb-2">4. 永續合作意願</label>
+                    <select v-model="formAdmin.willingness" class="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-primary-cyan">
+                        <option>非常願意</option>
+                        <option>有意願，但需要調整</option>
+                        <option>暫不考慮</option>
+                    </select>
+                </div>
+                <button type="submit" :disabled="isSubmitting" class="w-full bg-primary-cyan text-white font-bold py-3 rounded-md hover:bg-cyan-600 transition flex justify-center items-center">
+                    <span v-if="!isSubmitting">送出檢核</span>
+                    <div v-else class="loader"></div>
+                </button>
+            </form>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- 視圖 4: 管理員登入介面 (Login View) -->
+        <!-- ========================================== -->
+        <div v-if="currentView === 'login'" class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 max-w-md mx-auto mt-10">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">後台管理員登入</h2>
+            <form @submit.prevent="handleLogin" class="space-y-5">
+                <div>
+                    <label class="block text-gray-700 mb-2 text-sm font-bold">管理員密碼</label>
+                    <input v-model="adminPassword" type="password" placeholder="請輸入密碼" required class="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-gray-800">
+                </div>
+                <button type="submit" :disabled="isSubmitting" class="w-full bg-gray-800 text-white font-bold py-3 rounded-md hover:bg-gray-700 transition flex justify-center items-center">
+                    <span v-if="!isSubmitting">登入儀表板</span>
+                    <div v-else class="loader border-t-white"></div>
+                </button>
+            </form>
+            <div class="mt-6 text-center">
+                <button @click="switchView('home')" class="text-gray-500 hover:text-gray-700 text-sm underline">返回首頁</button>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- 視圖 5: 管理員儀表板 (Dashboard View) -->
+        <!-- ========================================== -->
+        <div v-if="currentView === 'dashboard'" class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 min-h-[500px]">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h2 class="text-2xl font-bold text-gray-800">管理員儀表板</h2>
+                <button @click="logout" class="text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 py-1 px-3 rounded transition">登出</button>
+            </div>
+
+            <!-- Dashboard 頁籤 (Tabs) -->
+            <div class="flex space-x-2 mb-6 overflow-x-auto pb-2">
+                <button @click="activeTab = 'energy'" :class="{'bg-primary-blue text-white shadow': activeTab === 'energy', 'bg-gray-100 text-gray-600 hover:bg-gray-200': activeTab !== 'energy'}" class="px-5 py-2 rounded-full font-medium text-sm whitespace-nowrap transition">能量週記</button>
+                <button @click="activeTab = 'peer'" :class="{'bg-primary-green text-white shadow': activeTab === 'peer', 'bg-gray-100 text-gray-600 hover:bg-gray-200': activeTab !== 'peer'}" class="px-5 py-2 rounded-full font-medium text-sm whitespace-nowrap transition">小組共學</button>
+                <button @click="activeTab = 'admin'" :class="{'bg-primary-cyan text-white shadow': activeTab === 'admin', 'bg-gray-100 text-gray-600 hover:bg-gray-200': activeTab !== 'admin'}" class="px-5 py-2 rounded-full font-medium text-sm whitespace-nowrap transition">行政檢核</button>
+            </div>
+
+            <!-- 資料列表 -->
+            <div class="space-y-4">
+                <div v-if="!dashboardData[activeTab] || dashboardData[activeTab].length === 0" class="text-center py-12 text-gray-400">
+                    目前沒有相關的提問與回饋資料。
+                </div>
+
+                <div v-for="item in dashboardData[activeTab]" :key="item.row" class="border border-gray-200 rounded-lg p-5 hover:shadow-sm transition relative bg-gray-50">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="text-xs text-gray-500 font-mono">{{ item.date || '未知時間' }}</div>
+                        <!-- 狀態標籤 -->
+                        <span v-if="item.status === '✅ 已回覆'" class="text-xs font-bold text-green-700 bg-green-100 px-2 py-1 rounded border border-green-200">✅ 已回覆</span>
+                        <span v-else class="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded border border-red-200">🔴 未回覆</span>
+                    </div>
+                    
+                    <h3 class="text-lg font-bold text-gray-800 mb-1">{{ item.name || item.topic || '匿名回饋' }}</h3>
+                    <div class="text-sm text-gray-500 mb-3 flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                        {{ item.email || '未提供信箱' }}
+                    </div>
+                    
+                    <p class="text-gray-700 text-sm mb-4 bg-white p-3 rounded border">{{ item.content || item.highlights || item.happyStory || '無詳細內容' }}</p>
+                    
+                    <!-- 動作區與回覆紀錄 -->
+                    <div v-if="item.status !== '✅ 已回覆'">
+                        <button @click="openReplyModal(item, activeTab)" class="text-sm bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700 transition shadow flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                            撰寫回覆並寄出
+                        </button>
+                    </div>
+                    <div v-else class="mt-4 bg-green-50 p-3 rounded-md border-l-4 border-green-500">
+                        <div class="text-xs font-bold text-green-800 mb-1">您的回覆紀錄：</div>
+                        <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ item.replyRecord }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- 全域 Modal: 撰寫回覆信件 -->
+        <!-- ========================================== -->
+        <transition name="modal">
+            <div v-if="replyModal.show" class="fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+                <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl relative">
+                    <button @click="closeReplyModal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                    <h3 class="text-xl font-bold text-gray-800 mb-1">回覆提問</h3>
+                    <p class="text-sm text-gray-500 mb-4">收件人：{{ replyModal.item?.email }}</p>
+                    
+                    <textarea v-model="replyModal.content" rows="6" placeholder="請輸入要寄送給老師的回覆內容..." class="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-gray-800 mb-4"></textarea>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <button @click="closeReplyModal" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition">取消</button>
+                        <button @click="submitReply" :disabled="replyModal.isSending" class="px-6 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 transition shadow flex items-center">
+                            <span v-if="!replyModal.isSending">寄出信件</span>
+                            <div v-else class="loader border-t-white w-4 h-4 border-2"></div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+    </div>
+
+    <script>
+        const { createApp, ref, reactive } = Vue;
+
+        createApp({
+            setup() {
+                // =============== 系統設定 ===============
+                const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';
+                const API_KEY = 'gem-happiness-2026-secure-key';
+
+                // =============== 狀態管理 ===============
+                const currentView = ref('home'); 
+                const isSubmitting = ref(false);
+                const toast = reactive({ show: false, message: '', isError: false });
+                const uploadStatus = reactive({ energy: '', peer: '' });
+
+                // =============== 後台管理狀態 ===============
+                const adminPassword = ref('');
+                const activeTab = ref('energy'); // 'energy', 'peer', 'admin'
+                // 存放後端抓回來的 Dashboard 資料
+                const dashboardData = ref({ energy: [], peer: [], admin: [] });
+                const replyModal = reactive({ show: false, item: null, sheet: '', content: '', isSending: false });
+
+                // =============== 表單資料模型 ===============
+                const getInitialEnergy = () => ({ teacherName: '', email: '', energyLevel: '綠燈 (充飽電)', materialIntuition: '順手', highlights: '', supportNeeded: '', attachmentBase64: '', attachmentName: '' });
+                const getInitialPeer = () => ({ teamMembers: '', email: '', topic: '', highlight: '', challenge: '', nextStep: '', photoBase64: '', photoName: '' });
+                const getInitialAdmin = () => ({ email: '', campusVibe: [], adminSupport: [], happyStory: '', willingness: '非常願意' });
+
+                const formEnergy = ref(getInitialEnergy());
+                const formPeer = ref(getInitialPeer());
+                const formAdmin = ref(getInitialAdmin());
+
+                // =============== 共用邏輯 ===============
+                const switchView = (view) => {
+                    currentView.value = view;
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                };
+
+                const showToast = (message, isError = false) => {
+                    toast.message = message;
+                    toast.isError = isError;
+                    toast.show = true;
+                    setTimeout(() => { toast.show = false; }, 3500);
+                };
+
+                const handleFileUpload = (event, type) => {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    if (file.size > 3 * 1024 * 1024) {
+                        showToast('檔案過大，請上傳小於 3MB 的圖片。', true);
+                        event.target.value = '';
+                        return;
+                    }
+                    uploadStatus[type] = '檔案處理中...';
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const base64 = e.target.result;
+                        if (type === 'energy') {
+                            formEnergy.value.attachmentBase64 = base64;
+                            formEnergy.value.attachmentName = file.name;
+                        } else if (type === 'peer') {
+                            formPeer.value.photoBase64 = base64;
+                            formPeer.value.photoName = file.name;
+                        }
+                        uploadStatus[type] = `✅ 已就緒: ${file.name}`;
+                    };
+                    reader.onerror = () => {
+                        uploadStatus[type] = '❌ 檔案讀取失敗';
+                        showToast('檔案讀取失敗，請重試。', true);
+                    };
+                    reader.readAsDataURL(file);
+                };
+
+                const submitData = async (action) => {
+                    if(GAS_WEB_APP_URL.includes('YOUR_DEPLOYMENT_ID')) {
+                        showToast('開發模式：請先在原始碼中設定您的 GAS_WEB_APP_URL！', true);
+                        return;
+                    }
+                    isSubmitting.value = true;
+                    let payload = {};
+                    switch(action) {
+                        case 'submit_energy': payload = formEnergy.value; break;
+                        case 'submit_peer': payload = formPeer.value; break;
+                        case 'submit_admin': payload = formAdmin.value; break;
+                    }
+
+                    try {
+                        const response = await fetch(GAS_WEB_APP_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            body: JSON.stringify({ action: action, apiKey: API_KEY, payload: payload })
+                        });
+                        const result = await response.json();
+                        if (result.success) {
+                            showToast('🎉 資料已成功送出！感謝您的回饋。');
+                            if(action === 'submit_energy') formEnergy.value = getInitialEnergy();
+                            if(action === 'submit_peer') formPeer.value = getInitialPeer();
+                            if(action === 'submit_admin') formAdmin.value = getInitialAdmin();
+                            uploadStatus.energy = '';
+                            uploadStatus.peer = '';
+                            switchView('home');
+                        } else {
+                            throw new Error(result.message || '伺服器拒絕請求');
+                        }
+                    } catch (error) {
+                        showToast('❌ 送出失敗，請檢查網路連線或稍後再試。', true);
+                    } finally {
+                        isSubmitting.value = false;
+                    }
+                };
+
+                // =============== 後台管理邏輯 ===============
+                
+                // 1. 登入並獲取儀表板資料
+                const handleLogin = async () => {
+                    if(GAS_WEB_APP_URL.includes('YOUR_DEPLOYMENT_ID')) {
+                        showToast('開發模式：請設定 GAS URL。目前自動套用假資料測試介面。', false);
+                        // DEMO 用假資料 (若無 GAS 時可預覽 UI)
+                        dashboardData.value = {
+                            energy: [{ row: 2, date: '2026/03/12', email: 'test@school.edu.tw', name: '王老師', content: '教材有點卡卡的，希望有教具包。', status: '未回覆' }],
+                            peer: [{ row: 2, date: '2026/03/10', email: 'group@school.edu.tw', topic: '數學素養共備', content: '希望能有更多跨校交流的機會。', status: '✅ 已回覆', replyRecord: '已安排下個月的跨校觀課喔！' }],
+                            admin: []
+                        };
+                        switchView('dashboard');
+                        return;
+                    }
+
+                    isSubmitting.value = true;
+                    try {
+                        const response = await fetch(GAS_WEB_APP_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            body: JSON.stringify({
+                                action: 'fetch_dashboard',
+                                apiKey: API_KEY,
+                                payload: { password: adminPassword.value }
+                            })
+                        });
+                        const result = await response.json();
+                        if (result.success) {
+                            dashboardData.value = result.data; // 預期後端回傳 { energy: [], peer: [], admin: [] }
+                            switchView('dashboard');
+                            showToast('登入成功！');
+                        } else {
+                            showToast(result.message || '密碼錯誤或權限不足', true);
+                        }
+                    } catch (error) {
+                        showToast('❌ 連線失敗，請檢查網路狀態。', true);
+                    } finally {
+                        isSubmitting.value = false;
+                    }
+                };
+
+                const logout = () => {
+                    adminPassword.value = '';
+                    dashboardData.value = { energy: [], peer: [], admin: [] };
+                    switchView('home');
+                    showToast('已登出系統');
+                };
+
+                // 2. 開啟回覆視窗
+                const openReplyModal = (item, sheetType) => {
+                    replyModal.item = item;
+                    replyModal.sheet = sheetType;
+                    replyModal.content = '';
+                    replyModal.show = true;
+                };
+
+                const closeReplyModal = () => {
+                    replyModal.show = false;
+                    setTimeout(() => { replyModal.item = null; }, 300); // 等待過渡動畫結束
+                };
+
+                // 3. 送出回覆信件
+                const submitReply = async () => {
+                    if (!replyModal.content.trim()) {
+                        showToast('請輸入回覆內容', true);
+                        return;
+                    }
+
+                    if(GAS_WEB_APP_URL.includes('YOUR_DEPLOYMENT_ID')) {
+                        // DEMO 測試模式
+                        replyModal.item.status = '✅ 已回覆';
+                        replyModal.item.replyRecord = replyModal.content;
+                        showToast('【測試模式】回覆成功！');
+                        closeReplyModal();
+                        return;
+                    }
+
+                    replyModal.isSending = true;
+                    try {
+                        const response = await fetch(GAS_WEB_APP_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            body: JSON.stringify({
+                                action: 'send_reply',
+                                apiKey: API_KEY,
+                                payload: {
+                                    password: adminPassword.value,
+                                    sheet: replyModal.sheet,
+                                    row: replyModal.item.row,
+                                    email: replyModal.item.email,
+                                    replyContent: replyModal.content
+                                }
+                            })
+                        });
+                        const result = await response.json();
+                        if (result.success) {
+                            showToast('✉️ 回覆信件已成功寄出！');
+                            // 本地更新狀態，無須重新抓取 API
+                            replyModal.item.status = '✅ 已回覆';
+                            replyModal.item.replyRecord = replyModal.content;
+                            closeReplyModal();
+                        } else {
+                            throw new Error(result.message || '寄送失敗');
+                        }
+                    } catch (error) {
+                        showToast('❌ 寄件失敗，請檢查網路或系統日誌。', true);
+                    } finally {
+                        replyModal.isSending = false;
+                    }
+                };
+
+                return {
+                    currentView, switchView, submitData, isSubmitting, toast, handleFileUpload, uploadStatus,
+                    formEnergy, formPeer, formAdmin,
+                    adminPassword, handleLogin, logout,
+                    activeTab, dashboardData,
+                    replyModal, openReplyModal, closeReplyModal, submitReply
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
