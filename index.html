@@ -127,7 +127,7 @@
                 
                 <!-- 區塊一：基本派定資訊 -->
                 <div class="bg-blue-50 rounded-xl p-5 border border-blue-100 space-y-4">
-                    <h3 class="font-bold text-blue-800 mb-2 flex items-center"><span class="mr-2">📝</span> 基本資訊</h3>
+                    <h3 class="font-bold text-blue-800 mb-2 flex items-center"><span class="mr-2">📝</span> 基本派定資訊</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-gray-700 text-sm font-bold mb-1">學校名稱 <span class="text-red-500">*</span></label>
@@ -139,7 +139,7 @@
                         </div>
                         <div>
                             <label class="block text-gray-700 text-sm font-bold mb-1">聯絡信箱 (Email) <span class="text-red-500">*</span></label>
-                            <input v-model="formEnergy.email" type="email" placeholder="接收回覆使用" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-primary-blue outline-none">
+                            <input v-model="formEnergy.email" type="email" placeholder="需接收回覆與證書" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-primary-blue outline-none">
                         </div>
                         <div>
                             <label class="block text-gray-700 text-sm font-bold mb-1">實施週期 <span class="text-red-500">*</span></label>
@@ -474,7 +474,7 @@
                     toast.message = message;
                     toast.isError = isError;
                     toast.show = true;
-                    setTimeout(() => { toast.show = false; }, 4000);
+                    setTimeout(() => { toast.show = false; }, 6000); // 延長顯示時間方便閱讀報錯
                 };
 
                 const handleFileUpload = (event, type) => {
@@ -523,10 +523,13 @@
                     try {
                         const response = await fetch(GAS_WEB_APP_URL, {
                             method: 'POST',
+                            redirect: 'follow', // 確保跟隨 GAS 的重定向
                             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                             body: JSON.stringify({ action: action, apiKey: API_KEY, payload: payload })
                         });
+                        
                         const result = await response.json();
+                        
                         if (result.success) {
                             showToast('🎉 表單已成功送出！感謝您的回饋。');
                             if(action === 'submit_energy') formEnergy.value = getInitialEnergy();
@@ -536,11 +539,20 @@
                             uploadStatus.peer = '';
                             switchView('home');
                         } else {
-                            throw new Error(result.message || '伺服器拒絕請求');
+                            throw new Error(result.message || '後端伺服器回傳失敗狀態');
                         }
                     } catch (error) {
-                        console.error(error);
-                        showToast('❌ 送出失敗，請檢查網路連線或聯繫管理員。', true);
+                        console.error("API 錯誤詳情:", error);
+                        
+                        // 優化錯誤追蹤：解析常見死因
+                        let errorMsg = error.message;
+                        if (errorMsg.includes('Failed to fetch')) {
+                            errorMsg = '無法連線 (請確認 GAS 權限是否設為「所有人」)';
+                        } else if (errorMsg.includes('Unexpected token')) {
+                            errorMsg = '後端未更新 (請至 GAS 建立「新版本」部署)';
+                        }
+                        
+                        showToast(`❌ 失敗原因：${errorMsg}`, true);
                     } finally {
                         isSubmitting.value = false;
                     }
@@ -552,6 +564,7 @@
                     try {
                         const response = await fetch(GAS_WEB_APP_URL, {
                             method: 'POST',
+                            redirect: 'follow',
                             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                             body: JSON.stringify({
                                 action: 'fetch_dashboard',
@@ -565,10 +578,14 @@
                             switchView('dashboard');
                             showToast('登入成功！');
                         } else {
-                            showToast(result.message || '密碼錯誤或權限不足', true);
+                            throw new Error(result.message || '密碼錯誤或權限不足');
                         }
                     } catch (error) {
-                        showToast('❌ 連線失敗，請檢查網路狀態。', true);
+                        console.error("Login Error:", error);
+                        let errorMsg = error.message;
+                        if (errorMsg.includes('Failed to fetch')) errorMsg = 'CORS 或網路連線錯誤';
+                        else if (errorMsg.includes('Unexpected token')) errorMsg = '部署版本錯誤或試算表 ID 錯誤';
+                        showToast(`❌ 登入失敗：${errorMsg}`, true);
                     } finally {
                         isSubmitting.value = false;
                     }
@@ -603,6 +620,7 @@
                     try {
                         const response = await fetch(GAS_WEB_APP_URL, {
                             method: 'POST',
+                            redirect: 'follow',
                             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                             body: JSON.stringify({
                                 action: 'send_reply',
@@ -626,7 +644,8 @@
                             throw new Error(result.message || '寄送失敗');
                         }
                     } catch (error) {
-                        showToast('❌ 寄件失敗，請檢查網路。', true);
+                        console.error("Reply Error:", error);
+                        showToast(`❌ 寄件失敗：${error.message}`, true);
                     } finally {
                         replyModal.isSending = false;
                     }
@@ -644,5 +663,3 @@
     </script>
 </body>
 </html>
-
-
