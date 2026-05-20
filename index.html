@@ -229,7 +229,7 @@
                     
                     <div class="bg-gray-50 p-4 rounded-md border border-gray-200">
                         <label class="block font-bold text-gray-700 mb-2">📷 數位學習歷程 <span class="text-gray-400 font-normal text-xs">(選填附件)</span></label>
-                        <p class="text-xs text-gray-500 mb-3">歡迎上傳學習單或互動花絮照片（作為未來推廣報告素材）</p>
+                        <p class="text-xs text-gray-500 mb-3">歡迎上傳學習單或互動花絮照片（照片僅作為紀錄使用，孩子的臉請後製再上傳）</p>
                         <input type="file" @change="e => handleFileUpload(e, 'energy')" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-white file:text-gray-700 file:border file:border-gray-300 hover:file:bg-gray-50">
                         <p v-if="uploadStatus.energy" class="text-xs text-green-600 mt-2 font-bold">{{ uploadStatus.energy }}</p>
                     </div>
